@@ -1,0 +1,50 @@
+service: smart-env-health-alert
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-northeast-2  # Seoul region for better latency in Korea
+  environment:
+    MONGODB_URI: ${env:MONGODB_URI}
+    JWT_SECRET: ${env:JWT_SECRET}
+    SEOUL_API_KEY: ${env:SEOUL_API_KEY}
+    KMA_API_KEY: ${env:KMA_API_KEY}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+
+functions:
+  api:
+    handler: src/lambda/handler.handler
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            origin: '*'
+
+  fetchRawData:
+    handler: src/cron/fetchRaw.handler
+    events:
+      - schedule: rate(10 minutes)
+
+  aggregateHourlyData:
+    handler: src/cron/aggregateHourly.handler
+    events:
+      - schedule: cron(0 * * * ? *)  # Every hour at minute 0
+
+package:
+  include:
+    - src/**
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline

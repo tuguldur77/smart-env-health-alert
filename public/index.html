@@ -1,0 +1,1642 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>스마트 환경·건강 알림</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --card-bg: rgba(30, 41, 59, 0.8);
+      --border: rgba(71, 85, 105, 0.3);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--primary);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h2::before {
+      content: '📊';
+      font-size: 1.2em;
+    }
+
+    .card h2.no-icon::before {
+      content: none;
+    }
+
+    .card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .card li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card li:last-child {
+      border-bottom: none;
+    }
+
+    .status-good { color: var(--success); }
+    .status-warning { color: var(--warning); }
+    .status-danger { color: var(--danger); }
+
+    .row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-top: 1rem;
+      font-style: italic;
+    }
+
+    /* Buttons */
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #64748b, #475569);
+      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 8px 20px rgba(100, 116, 139, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Inputs */
+    .ipt {
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .ipt:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .ipt::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Auth Forms */
+    .auth-form {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      margin: 2rem auto;
+      max-width: 400px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-form h2 {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-form .ipt {
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+
+    /* User Profile Display Styles */
+    .user-info-display {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .user-avatar-display {
+      flex-shrink: 0;
+    }
+
+    .user-details-display {
+      flex: 1;
+    }
+
+    .user-details-display h3 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .profile-summary-display {
+      margin-bottom: 2rem;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-row .label {
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .profile-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .profile-actions .btn {
+      width: 100%;
+    }
+
+    /* Survey Styles */
+    .survey-group {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .survey-group h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .survey-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 400;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .checkbox-group label:hover {
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      accent-color: var(--primary);
+    }
+
+    /* Profile Page Styles */
+    .profile-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      padding: 1.5rem;
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .user-avatar {
+      flex-shrink: 0;
+    }
+
+    .avatar-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      box-shadow: var(--shadow);
+      border: 3px solid var(--card-bg);
+    }
+
+    .user-details {
+      text-align: left;
+    }
+
+    .user-details h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .user-stats {
+      margin-top: 0.5rem;
+    }
+
+    .profile-content {
+      margin-top: 2rem;
+    }
+
+    .profile-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .tab-btn {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .tab-btn:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .overview-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .overview-card {
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .overview-card h4 {
+      margin: 0 0 1rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .profile-summary {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-item .label {
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 350px;
+      margin: 1.5rem 0;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .chart-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), #06b6d4);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .chart-container canvas {
+      border-radius: 8px;
+    }
+
+    /* Chart Legend Enhancement */
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .legend-color.pm10 {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .legend-color.pm25 {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+    }
+
+    /* Chart Stats */
+    .chart-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stat-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .stat-item:hover::before {
+      left: 100%;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+      border-color: var(--primary);
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.25rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Map Styles */
+    .map-container {
+      height: 400px;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1rem 0;
+      background: rgba(15, 23, 42, 0.3);
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .view-toggle .btn {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .view-toggle .btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .view-content {
+      min-height: 200px;
+    }
+
+    .map-legend {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .map-legend .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .map-legend .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Leaflet Custom Marker Styles */
+    .leaflet-div-icon {
+      background: transparent !important;
+      border: none !important;
+    }
+
+    .custom-marker {
+      background: transparent !important;
+      border: none !important;
+    }
+
+    /* Enhanced Chart Card */
+    .card:has(.chart-container) {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.7));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .card:has(.chart-container) h2 {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Alert Display Styles */
+    .alert-display {
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+
+    .alert-display p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: var(--text);
+    }
+
+    .alert-severity {
+      text-align: center;
+    }
+
+    .alert-severity .badge {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+    }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Loading animation */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .loading {
+      animation: pulse 2s infinite;
+    }
+
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .left-column {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      position: sticky;
+      top: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cards {
+        grid-template-columns: 1fr;
+        padding: 1rem 0;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+
+      header {
+        padding: 1rem;
+      }
+
+      header h1 {
+        font-size: 1.5rem;
+      }
+
+      .auth-form {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+
+      .checkbox-group {
+        grid-template-columns: 1fr;
+      }
+
+      .user-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+
+      .user-details {
+        text-align: center;
+      }
+
+      .profile-tabs {
+        flex-direction: column;
+      }
+
+      .overview-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+
+      .chart-legend {
+        gap: 1rem;
+      }
+
+      .chart-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+
+      .stat-item {
+        padding: 0.5rem;
+      }
+
+      .stat-value {
+        font-size: 1.1rem;
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
+      }
+
+      /* Mobile Layout */
+      .main-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .left-column,
+      .right-column {
+        position: static;
+      }
+
+      /* Mobile User Profile Display */
+      .user-info-display {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+
+      .user-details-display {
+        text-align: center;
+      }
+
+      .summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+
+      .profile-actions {
+        gap: 0.5rem;
+      }
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>🌿 스마트 환경·건강 알림</h1>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="main-layout">
+      <!-- Left Column: Data Cards -->
+      <div class="left-column">
+        <section class="cards">
+          <!-- 공기질 카드 -->
+          <article class="card">
+            <h2>대기질 정보</h2>
+            <ul>
+              <li>
+                <span>행정구역</span>
+                <span id="city" class="loading">-</span>
+              </li>
+              <li>
+                <span>미세먼지(PM10)</span>
+                <span id="pm10" class="loading">-</span>
+              </li>
+              <li>
+                <span>초미세먼지(PM2.5)</span>
+                <span id="pm25" class="loading">-</span>
+              </li>
+              <li>
+                <span>대기질 등급</span>
+                <span id="grade" class="loading">-</span>
+              </li>
+            </ul>
+          </article>
+
+          <!-- 날씨 카드 -->
+          <article class="card">
+            <h2>날씨 정보</h2>
+            <ul>
+              <li>
+                <span>현재 기온</span>
+                <span id="temp" class="loading">-</span>
+              </li>
+              <li>
+                <span>체감온도</span>
+                <span id="feels" class="loading">-</span>
+              </li>
+              <li>
+                <span>습도</span>
+                <span id="humi" class="loading">-</span>
+              </li>
+              <li>
+                <span>풍속</span>
+                <span id="wind" class="loading">-</span>
+              </li>
+              <li>
+                <span>강수확률</span>
+                <span id="rain" class="loading">-</span>
+              </li>
+            </ul>
+          </article>
+
+          <!-- 건강 알림 카드 -->
+          <article class="card">
+            <h2>🔔 건강 알림</h2>
+            <div id="alertMessage" class="alert-display">
+              <p class="loading">알림을 불러오는 중...</p>
+            </div>
+            <div id="alertSeverity" class="alert-severity" style="display: none;">
+              <span class="badge" id="severityBadge"></span>
+            </div>
+          </article>
+
+          <!-- 위치/시간 카드 -->
+          <article class="card">
+            <h2>위치 정보</h2>
+            <div class="row" style="margin-bottom:1rem;">
+              <button id="btnReload" class="btn">📍 위치 새로고침</button>
+              <span class="muted">브라우저 권한으로 재시도</span>
+            </div>
+
+            <div class="row" style="margin-bottom:1rem;">
+              <span style="font-size:0.875rem;">수동 위치 입력</span>
+            </div>
+
+            <div class="row">
+              <input id="latInput" class="ipt" type="text" placeholder="위도 (37.5665)" style="flex:1;" />
+              <input id="lonInput" class="ipt" type="text" placeholder="경도 (126.978)" style="flex:1;" />
+              <button id="btnUseManual" class="btn">적용</button>
+            </div>
+
+            <div class="meta">
+              <div>📍 위도: <span id="lat">-</span></div>
+              <div>📍 경도: <span id="lon">-</span></div>
+              <div>🕒 업데이트: <span id="updated">-</span></div>
+            </div>
+
+            <p class="muted">브라우저가 위치 권한을 거부한 경우, 좌표를 수동으로 입력하세요.</p>
+          </article>
+        </section>
+
+        <!-- Seoul Districts Map -->
+        <section class="cards">
+          <article class="card">
+            <h2>🗺️ 서울시 구별 대기질 현황</h2>
+            <div id="mapView" class="view-content">
+              <div id="seoulMap" class="map-container"></div>
+              <div class="map-legend">
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #00d4aa;"></div>
+                  <span>좋음 (0-30)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #ffd700;"></div>
+                  <span>보통 (31-80)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #ff6b6b;"></div>
+                  <span>나쁨 (81+)</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- History Chart -->
+        <section class="cards">
+          <article class="card">
+            <h2 class="no-icon">📊 최근 12시간 데이터 추이</h2>
+            <p id="chartNote" class="muted" style="display: none;">데이터가 아직 수집되지 않았습니다. AWS에 배포 후 자동으로 수집됩니다.</p>
+
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-color pm10"></div>
+                <span>미세먼지 (PM10)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color pm25"></div>
+                <span>초미세먼지 (PM2.5)</span>
+              </div>
+            </div>
+
+            <div class="chart-container">
+              <canvas id="historyChart"></canvas>
+            </div>
+
+            <div class="chart-stats">
+              <div class="stat-item">
+                <span class="stat-value" id="avgPm10">-</span>
+                <span class="stat-label">평균 PM10</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="avgPm25">-</span>
+                <span class="stat-label">평균 PM2.5</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="maxPm10">-</span>
+                <span class="stat-label">최고 PM10</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="maxPm25">-</span>
+                <span class="stat-label">최고 PM2.5</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+
+      <!-- Right Column: Auth Sections -->
+      <div class="right-column">
+        <!-- Auth Section -->
+        <div id="authSection" class="auth-form">
+          <h2>🔐 로그인</h2>
+          <input id="loginEmail" type="email" placeholder="이메일 주소" class="ipt" />
+          <input id="loginPassword" type="password" placeholder="비밀번호" class="ipt" />
+          <div class="row">
+            <button id="loginBtn" class="btn">로그인</button>
+            <button id="showSignupBtn" class="btn btn-secondary">회원가입</button>
+          </div>
+        </div>
+
+        <div id="signupSection" class="auth-form" style="display: none;">
+          <h2>✨ 회원가입</h2>
+          <input id="signupEmail" type="email" placeholder="이메일 주소" class="ipt" />
+          <input id="signupName" type="text" placeholder="이름" class="ipt" />
+          <input id="signupPassword" type="password" placeholder="비밀번호" class="ipt" />
+          <div class="row">
+            <button id="signupBtn" class="btn">회원가입</button>
+            <button id="showLoginBtn" class="btn btn-secondary">로그인으로 돌아가기</button>
+          </div>
+        </div>
+
+        <div id="userSection" class="auth-form" style="display: none;">
+          <h2>👤 사용자 프로필</h2>
+
+          <!-- User Info Display -->
+          <div class="user-info-display">
+            <div class="user-avatar-display">
+              <div id="userAvatarDisplay" class="avatar-icon">👤</div>
+            </div>
+            <div class="user-details-display">
+              <h3 id="userNameDisplay"></h3>
+              <p id="userEmailDisplay" class="muted"></p>
+            </div>
+          </div>
+
+          <!-- Profile Summary -->
+          <div class="profile-summary-display">
+            <div class="summary-row">
+              <span class="label">연령대:</span>
+              <span id="displayAgeGroup">-</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">성별:</span>
+              <span id="displayGender">-</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">만성 질환:</span>
+              <span id="displayConditions">-</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">환경 민감도:</span>
+              <span id="displaySensitivity">-</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="profile-actions">
+            <button id="editProfileBtn" class="btn">프로필 수정</button>
+            <button id="logoutBtn" class="btn btn-danger">로그아웃</button>
+          </div>
+        </div>
+
+        <!-- User Profile Page -->
+        <div id="userProfileSection" class="auth-form" style="display: none; max-width: 800px;">
+    <div class="profile-header">
+      <button id="backToDashboardBtn" class="btn btn-secondary" style="position: absolute; top: 1rem; left: 1rem;">← 뒤로가기</button>
+      <h2>👤 사용자 프로필</h2>
+      <div class="user-info">
+        <div class="user-avatar">
+          <div id="userAvatar" class="avatar-icon">👤</div>
+        </div>
+        <div class="user-details">
+          <h3 id="profileUserName"></h3>
+          <p id="profileUserEmail" class="muted"></p>
+          <div class="user-stats">
+            <span class="badge badge-success" id="profileStatus">프로필 완료</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-content">
+      <div class="profile-tabs">
+        <button id="tabOverview" class="tab-btn active">개요</button>
+        <button id="tabEditSurvey" class="tab-btn">설문 수정</button>
+      </div>
+
+      <!-- Overview Tab -->
+      <div id="overviewTab" class="tab-content active">
+        <div class="overview-cards">
+          <div class="overview-card">
+            <h4>📊 건강 프로필 요약</h4>
+            <div class="profile-summary">
+              <div class="summary-item">
+                <span class="label">연령대:</span>
+                <span id="summaryAgeGroup">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">성별:</span>
+                <span id="summaryGender">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">만성 질환:</span>
+                <span id="summaryConditions">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">환경 민감도:</span>
+                <span id="summarySensitivity">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="overview-card">
+            <h4>🔔 알림 설정</h4>
+            <div class="alert-settings">
+              <div id="alertPreferences">-</div>
+            </div>
+          </div>
+
+          <div class="overview-card">
+            <h4>🚨 응급 연락처</h4>
+            <div id="emergencyInfo">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Survey Tab -->
+      <div id="editSurveyTab" class="tab-content">
+        <h3>📋 건강·환경 민감도 설문지 수정</h3>
+        <p class="muted">설문 답변을 수정하고 저장하세요.</p>
+
+        <h4>1. 기본 정보</h4>
+        <div class="survey-group">
+          <label>연령대</label>
+          <select id="editAgeGroup" class="ipt">
+            <option value="">선택하세요</option>
+            <option value="0-6">0–6세 (유아·영유아)</option>
+            <option value="7-12">7–12세 (어린이)</option>
+            <option value="13-18">13–18세 (청소년)</option>
+            <option value="19-64">19–64세 (성인)</option>
+            <option value="65+">65세 이상 (고령자)</option>
+          </select>
+        </div>
+
+        <div class="survey-group">
+          <label>성별</label>
+          <select id="editGender" class="ipt">
+            <option value="">선택하세요</option>
+            <option value="male">남성</option>
+            <option value="female">여성</option>
+            <option value="other">기타 / 응답 안함</option>
+          </select>
+        </div>
+
+        <h4>2. 건강 상태</h4>
+        <div class="survey-group">
+          <label>만성 질환 여부 (복수 선택 가능)</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" value="asthma" id="editAsthma"> 천식</label>
+            <label><input type="checkbox" value="copd" id="editCopd"> 만성폐쇄성폐질환(COPD)</label>
+            <label><input type="checkbox" value="allergy" id="editAllergy"> 비염 또는 알레르기 호흡기 질환</label>
+            <label><input type="checkbox" value="heart" id="editHeart"> 심혈관 질환</label>
+            <label><input type="checkbox" value="diabetes" id="editDiabetes"> 당뇨</label>
+            <label><input type="checkbox" value="other" id="editOther"> 기타 만성 질환</label>
+            <label><input type="checkbox" value="none" id="editNone"> 없음</label>
+          </div>
+        </div>
+
+        <div class="survey-group">
+          <label>호흡기 질환 관련 민감도</label>
+          <select id="editRespiratorySensitivity" class="ipt">
+            <option value="very_sensitive">매우 민감함</option>
+            <option value="sensitive">다소 민감함</option>
+            <option value="normal">보통</option>
+            <option value="low">거의 영향 없음</option>
+          </select>
+        </div>
+
+        <h4>3. 생활 패턴</h4>
+        <div class="survey-group">
+          <label>주로 활동하는 시간대</label>
+          <select id="editActivityTime" class="ipt">
+            <option value="morning">오전 (06:00–12:00)</option>
+            <option value="afternoon">오후 (12:00–18:00)</option>
+            <option value="evening">저녁/야간 (18:00–24:00)</option>
+            <option value="irregular">불규칙함</option>
+          </select>
+        </div>
+
+        <div class="survey-group">
+          <label>하루 평균 실외 활동 시간</label>
+          <select id="editOutdoorActivityHours" class="ipt">
+            <option value="<1">1시간 미만</option>
+            <option value="1-3">1–3시간</option>
+            <option value="3-5">3–5시간</option>
+            <option value="5+">5시간 이상</option>
+          </select>
+        </div>
+
+        <div class="survey-group">
+          <label>직업·생활 환경 특성</label>
+          <select id="editWorkEnvironment" class="ipt">
+            <option value="indoor">주로 실내에서 근무함</option>
+            <option value="mixed">실내·실외 혼합</option>
+            <option value="outdoor">실외 활동이 많음 (배달, 건설, 운송 등)</option>
+          </select>
+        </div>
+
+        <h4>4. 환경 민감도</h4>
+        <div class="survey-group">
+          <label>미세먼지(PM10/PM2.5)에 대한 민감도</label>
+          <select id="editPmSensitivity" class="ipt">
+            <option value="very_sensitive">매우 민감함</option>
+            <option value="sensitive">민감함</option>
+            <option value="normal">보통</option>
+            <option value="low">둔함</option>
+          </select>
+        </div>
+
+        <div class="survey-group">
+          <label>날씨(더위·추위)에 대한 민감도</label>
+          <select id="editWeatherSensitivity" class="ipt">
+            <option value="very_sensitive">매우 민감함</option>
+            <option value="sensitive">민감함</option>
+            <option value="normal">보통</option>
+            <option value="low">둔함</option>
+          </select>
+        </div>
+
+        <div class="survey-group">
+          <label>기상 재난(폭염, 한파, 강풍 등)에 대한 민감도</label>
+          <select id="editDisasterSensitivity" class="ipt">
+            <option value="very_sensitive">매우 민감함</option>
+            <option value="sensitive">민감함</option>
+            <option value="normal">보통</option>
+            <option value="low">둔함</option>
+          </select>
+        </div>
+
+        <h4>5. 행동 패턴</h4>
+        <div class="survey-group">
+          <label>외출 시 마스크 착용 빈도</label>
+          <select id="editMaskUsage" class="ipt">
+            <option value="always">항상 착용</option>
+            <option value="usually">대체로 착용</option>
+            <option value="sometimes">가끔 착용</option>
+            <option value="never">거의/전혀 착용하지 않음</option>
+          </select>
+        </div>
+
+        <div class="survey-group">
+          <label>공기청정기 사용 여부</label>
+          <select id="editAirPurifierUsage" class="ipt">
+            <option value="always">항상 사용</option>
+            <option value="often">종종 사용</option>
+            <option value="rarely">거의 사용하지 않음</option>
+            <option value="none">없음</option>
+          </select>
+        </div>
+
+        <h4>6. 알림 설정</h4>
+        <div class="survey-group">
+          <label>어떤 상황에서 알림을 받고 싶나요? (복수 선택 가능)</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" value="pm10_bad" id="editPm10Bad"> 미세먼지 나쁨 이상</label>
+            <label><input type="checkbox" value="pm25_bad" id="editPm25Bad"> 초미세먼지 나쁨 이상</label>
+            <label><input type="checkbox" value="ozone_high" id="editOzoneHigh"> 오존 지수 높음</label>
+            <label><input type="checkbox" value="heat_wave" id="editHeatwave"> 폭염 특보</label>
+            <label><input type="checkbox" value="cold_wave" id="editColdwave"> 한파 특보</label>
+            <label><input type="checkbox" value="temp_change" id="editTempChange"> 체감온도 급변</label>
+            <label><input type="checkbox" value="air_improvement" id="editAirImprovement"> 공기질 개선 알림</label>
+            <label><input type="checkbox" value="personal_risk" id="editPersonalRisk"> 건강 위험도 개인화 알림</label>
+          </div>
+        </div>
+
+        <div class="survey-group">
+          <label>알림 받고 싶은 시간대</label>
+          <select id="editAlertTimePreference" class="ipt">
+            <option value="anytime">언제든지</option>
+            <option value="morning">오전 위주</option>
+            <option value="before_outing">외출 전만</option>
+            <option value="no_night">취침 시간 제외 (22시–06시 알림 끄기)</option>
+          </select>
+        </div>
+
+        <h4>7. 응급 연락 관련 설정</h4>
+        <div class="survey-group">
+          <label>응급 상황 시 보호자에게 알림 전송</label>
+          <select id="editEmergencyEnabled" class="ipt">
+            <option value="false">아니오</option>
+            <option value="true">예</option>
+          </select>
+        </div>
+
+        <div id="editEmergencyDetails" style="display: none;">
+          <div class="survey-group">
+            <label>보호자 이름</label>
+            <input id="editEmergencyName" type="text" class="ipt" placeholder="이름">
+          </div>
+          <div class="survey-group">
+            <label>보호자 전화번호</label>
+            <input id="editEmergencyPhone" type="tel" class="ipt" placeholder="전화번호">
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="saveEditedProfileBtn" class="btn">수정사항 저장</button>
+          <button id="cancelEditBtn" class="btn btn-secondary">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Profile Survey -->
+  <div id="profileSection" class="auth-form" style="display: none;">
+    <h2>📋 스마트 환경·헬스케어 알리미 — 사용자 건강·환경 민감도 설문지</h2>
+    <p>(Health & Environment Sensitivity Survey)</p>
+
+    <h3>1. 기본 정보</h3>
+    <div class="survey-group">
+      <label>1) 연령대</label>
+      <select id="ageGroup" class="ipt" required>
+        <option value="">선택하세요</option>
+        <option value="0-6">0–6세 (유아·영유아)</option>
+        <option value="7-12">7–12세 (어린이)</option>
+        <option value="13-18">13–18세 (청소년)</option>
+        <option value="19-64">19–64세 (성인)</option>
+        <option value="65+">65세 이상 (고령자)</option>
+      </select>
+    </div>
+
+    <div class="survey-group">
+      <label>2) 성별 (선택 사항)</label>
+      <select id="gender" class="ipt" required>
+        <option value="">선택하세요</option>
+        <option value="male">남성</option>
+        <option value="female">여성</option>
+        <option value="other">기타 / 응답 안함</option>
+      </select>
+    </div>
+
+    <h3>2. 건강 상태</h3>
+    <div class="survey-group">
+      <label>1) 만성 질환 여부 (복수 선택 가능)</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" value="asthma"> 천식</label>
+        <label><input type="checkbox" value="copd"> 만성폐쇄성폐질환(COPD)</label>
+        <label><input type="checkbox" value="allergy"> 비염 또는 알레르기 호흡기 질환</label>
+        <label><input type="checkbox" value="heart"> 심혈관 질환</label>
+        <label><input type="checkbox" value="diabetes"> 당뇨</label>
+        <label><input type="checkbox" value="other"> 기타 만성 질환</label>
+        <label><input type="checkbox" value="none"> 없음</label>
+      </div>
+    </div>
+
+    <div class="survey-group">
+      <label>2) 호흡기 질환 관련 민감도</label>
+      <select id="respiratorySensitivity" class="ipt">
+        <option value="very_sensitive">매우 민감함</option>
+        <option value="sensitive">다소 민감함</option>
+        <option value="normal" selected>보통</option>
+        <option value="low">거의 영향 없음</option>
+      </select>
+    </div>
+
+    <h3>3. 생활 패턴</h3>
+    <div class="survey-group">
+      <label>1) 주로 활동하는 시간대</label>
+      <select id="activityTime" class="ipt">
+        <option value="morning">오전 (06:00–12:00)</option>
+        <option value="afternoon">오후 (12:00–18:00)</option>
+        <option value="evening">저녁/야간 (18:00–24:00)</option>
+        <option value="irregular" selected>불규칙함</option>
+      </select>
+    </div>
+
+    <div class="survey-group">
+      <label>2) 하루 평균 실외 활동 시간은?</label>
+      <select id="outdoorActivityHours" class="ipt">
+        <option value="<1">1시간 미만</option>
+        <option value="1-3" selected>1–3시간</option>
+        <option value="3-5">3–5시간</option>
+        <option value="5+">5시간 이상</option>
+      </select>
+    </div>
+
+    <div class="survey-group">
+      <label>3) 직업·생활 환경 특성</label>
+      <select id="workEnvironment" class="ipt">
+        <option value="indoor">주로 실내에서 근무함</option>
+        <option value="mixed" selected>실내·실외 혼합</option>
+        <option value="outdoor">실외 활동이 많음 (배달, 건설, 운송 등)</option>
+      </select>
+    </div>
+
+    <h3>4. 환경 민감도</h3>
+    <div class="survey-group">
+      <label>1) 미세먼지(PM10/PM2.5)에 대한 민감도</label>
+      <select id="pmSensitivity" class="ipt">
+        <option value="very_sensitive">매우 민감함</option>
+        <option value="sensitive">민감함</option>
+        <option value="normal" selected>보통</option>
+        <option value="low">둔함</option>
+      </select>
+    </div>
+
+    <div class="survey-group">
+      <label>2) 날씨(더위·추위)에 대한 민감도</label>
+      <select id="weatherSensitivity" class="ipt">
+        <option value="very_sensitive">매우 민감함</option>
+        <option value="sensitive">민감함</option>
+        <option value="normal" selected>보통</option>
+        <option value="low">둔함</option>
+      </select>
+    </div>
+
+    <div class="survey-group">
+      <label>3) 기상 재난(폭염, 한파, 강풍 등)에 대한 민감도</label>
+      <select id="disasterSensitivity" class="ipt">
+        <option value="very_sensitive">매우 민감함</option>
+        <option value="sensitive">민감함</option>
+        <option value="normal" selected>보통</option>
+        <option value="low">둔함</option>
+      </select>
+    </div>
+
+    <h3>5. 행동 패턴</h3>
+    <div class="survey-group">
+      <label>1) 외출 시 마스크 착용 빈도</label>
+      <select id="maskUsage" class="ipt">
+        <option value="always">항상 착용</option>
+        <option value="usually">대체로 착용</option>
+        <option value="sometimes" selected>가끔 착용</option>
+        <option value="never">거의/전혀 착용하지 않음</option>
+      </select>
+    </div>
+
+    <div class="survey-group">
+      <label>2) 공기청정기 사용 여부</label>
+      <select id="airPurifierUsage" class="ipt">
+        <option value="always">항상 사용</option>
+        <option value="often">종종 사용</option>
+        <option value="rarely" selected>거의 사용하지 않음</option>
+        <option value="none">없음</option>
+      </select>
+    </div>
+
+    <h3>6. 알림 설정</h3>
+    <div class="survey-group">
+      <label>1) 어떤 상황에서 알림을 받고 싶나요? (복수 선택 가능)</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" value="pm10_bad" checked> 미세먼지 나쁨 이상</label>
+        <label><input type="checkbox" value="pm25_bad" checked> 초미세먼지 나쁨 이상</label>
+        <label><input type="checkbox" value="ozone_high"> 오존 지수 높음</label>
+        <label><input type="checkbox" value="heat_wave"> 폭염 특보</label>
+        <label><input type="checkbox" value="cold_wave"> 한파 특보</label>
+        <label><input type="checkbox" value="temp_change"> 체감온도 급변</label>
+        <label><input type="checkbox" value="air_improvement"> 공기질 개선 알림</label>
+        <label><input type="checkbox" value="personal_risk"> 건강 위험도 개인화 알림</label>
+      </div>
+    </div>
+
+    <div class="survey-group">
+      <label>2) 알림 받고 싶은 시간대</label>
+      <select id="alertTimePreference" class="ipt">
+        <option value="anytime" selected>언제든지</option>
+        <option value="morning">오전 위주</option>
+        <option value="before_outing">외출 전만</option>
+        <option value="no_night">취침 시간 제외 (22시–06시 알림 끄기)</option>
+      </select>
+    </div>
+
+    <h3>7. 응급 연락 관련 설정 (선택 사항)</h3>
+    <div class="survey-group">
+      <label>1) 응급 상황 시 보호자에게 알림 전송</label>
+      <select id="emergencyEnabled" class="ipt">
+        <option value="false" selected>아니오</option>
+        <option value="true">예</option>
+      </select>
+    </div>
+
+    <div id="emergencyDetails" style="display: none;">
+      <div class="survey-group">
+        <label>보호자 이름</label>
+        <input id="emergencyName" type="text" class="ipt" placeholder="이름">
+      </div>
+      <div class="survey-group">
+        <label>보호자 전화번호</label>
+        <input id="emergencyPhone" type="tel" class="ipt" placeholder="전화번호">
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="saveProfileBtn" class="btn">저장</button>
+      <button id="skipProfileBtn" class="btn">건너뛰기</button>
+    </div>
+    </div>
+  </div>
+
+  <!-- 반드시 모든 DOM 뒤에서 로드 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

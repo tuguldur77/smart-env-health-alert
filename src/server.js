@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { getJwtSecret } from './config/jwt.js';
 
 // Routes
 import weatherRoutes from './routes/weather.js';
@@ -21,6 +22,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '..', 'server', '.env') });
+getJwtSecret();
 const app = express();
 
 // MongoDB connection

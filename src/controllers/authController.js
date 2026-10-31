@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
+import { getJwtSecret } from '../config/jwt.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export const signup = async (req, res) => {
   try {
@@ -58,7 +58,7 @@ export const login = async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, getJwtSecret(), { expiresIn: '7d' });
     res.json({ token, user: { id: user._id, email: user.email, name: user.name } });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,6 +1,7 @@
 import express from 'express';
 // import cors from 'cors';
 import dotenv from 'dotenv';
+import { getJwtSecret } from './config/jwt.js';
 
 import weatherRoutes from './routes/weather.js';
 import airRoutes     from './routes/air.js';
@@ -10,6 +11,7 @@ import historyRoutes from './routes/history.js';
 import profileRoutes from './routes/profile.js';
 
 dotenv.config();
+getJwtSecret();
 
 // Create Express app (no listen(), no static, no filesystem)
 const app = express();

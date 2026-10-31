@@ -1,6 +1,7 @@
 import express from "express";
 import { getAlertMessage } from "../services/alertService.js";
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../../src/config/jwt.js';
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.get("/personal", async (req, res) => {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, getJwtSecret());
     
     // Get user profile (you'll need to implement this)
     // For now, just return general alerts

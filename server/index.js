@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { getJwtSecret } from '../src/config/jwt.js';
 import mongoose from 'mongoose';
 
 import weatherRoutes from './routes/weather.js';
@@ -29,6 +30,8 @@ if (!process.env.SEOUL_API_KEY || !process.env.KMA_API_KEY) {
     dotenv.config({ path: localEnvPath });
   }
 }
+
+getJwtSecret();
 
 // MongoDB connection
 const connectDB = async () => {

@@ -1,0 +1,8 @@
+// Read on demand: ES module imports run before dotenv.config() in the entry files.
+export const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not set');
+  }
+  return secret;
+};
